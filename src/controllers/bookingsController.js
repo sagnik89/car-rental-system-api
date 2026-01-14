@@ -1,17 +1,37 @@
-import { createBooking, deleteBookingbyId, findBookingById, findBookingByUser, updateBookingbyId } from "../db/dbHelper.js";
+import { z } from "zod";
+import {
+  createBooking,
+  deleteBookingbyId,
+  findBookingById,
+  findBookingByUser,
+  updateBookingbyId,
+} from "../db/dbHelper.js";
+
+
+// zod schemas
+const bookingIdSchema = z.object({
+  bookingId: z.coerce.number().int().positive(),
+});
+
+const createBookingSchema = z.object({
+  carName: z.string().min(1),
+  days: z.number().int().min(1).max(365),
+  rentPerDay: z.number().int().min(1).max(2000),
+});
+
+const updateBookingSchema = z
+  .object({
+    carName: z.string().min(1).optional(),
+    days: z.number().int().min(1).max(365).optional(),
+    rentPerDay: z.number().int().min(1).max(2000).optional(),
+    status: z.enum(["booked", "completed", "cancelled"]).optional(),
+  })
+  .strict();
 
 export const postBooking = async (req, res) => {
-  const { carName, days, rentPerDay } = req.body;
+  const parsed = createBookingSchema.safeParse(req.body);
 
-  if (
-    !carName ||
-    !Number.isInteger(days) ||
-    days <= 0 ||
-    days > 365 ||
-    !Number.isInteger(rentPerDay) ||
-    rentPerDay <= 0 ||
-    rentPerDay > 2000
-  ) {
+  if (!parsed.success) {
     return res.status(400).json({
       success: false,
       error: "Invalid inputs",
@@ -19,6 +39,8 @@ export const postBooking = async (req, res) => {
   }
 
   // console.log(req.user.id + "Hello user")
+
+  const { carName, days, rentPerDay } = parsed.data;
 
   try {
     const [result] = await createBooking(
@@ -39,7 +61,7 @@ export const postBooking = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error: "Internal Server Error ---" + error.message,
+      error: "Internal Server Error --- " + error.message,
     });
   }
 };
@@ -53,7 +75,6 @@ export const getBookings = async (req, res) => {
       totalAmount += item.totalCost;
       // console.log(totalAmount);
     });
-
 
     if (req.query.summary === "true") {
       return res.status(200).json({
@@ -74,35 +95,32 @@ export const getBookings = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error: "Internal Server Error ---" + error.message,
+      error: "Internal Server Error --- " + error.message,
     });
   }
 };
 
 export const getSingleBooking = async (req, res) => {
+  const parsed = bookingIdSchema.safeParse(req.params);
 
-  const { bookingId } = req.params
-  
-
-  // console.log(bookingId)
-  
-  if (!Number.isInteger(parseInt(bookingId))) {
+  if (!parsed.success) {
     return res.status(404).json({
       success: false,
-      error:"Booking not found"
-    })
+      error: "Booking not found",
+    });
   }
 
+  const { bookingId } = parsed.data;
+
   try {
-    const booking = await findBookingById(parseInt(bookingId), req.user.id);
-    
+    const booking = await findBookingById(bookingId, req.user.id);
+
     if (booking.length === 0) {
       return res.status(404).json({
         success: false,
         error: "Booking not found",
       });
     }
-
 
     return res.status(200).json({
       success: true,
@@ -117,20 +135,27 @@ export const getSingleBooking = async (req, res) => {
 };
 
 export const updateBooking = async (req, res) => {
-
-  const { bookingId } = req.params
-  
-  const newData = req.body
-
-  if (!Number.isInteger(parseInt(bookingId))) {
+  const paramParsed = bookingIdSchema.safeParse(req.params);
+  if (!paramParsed.success) {
     return res.status(404).json({
       success: false,
       error: "Booking not found",
     });
   }
 
+  const bodyParsed = updateBookingSchema.safeParse(req.body);
+  if (!bodyParsed.success) {
+    return res.status(400).json({
+      success: false,
+      error: "Invalid inputs",
+    });
+  }
+
+  const { bookingId } = paramParsed.data;
+  const newData = bodyParsed.data;
+
   try {
-    const booking = await findBookingById(parseInt(bookingId), req.user.id);
+    const booking = await findBookingById(bookingId, req.user.id);
 
     if (booking.length === 0) {
       return res.status(404).json({
@@ -139,48 +164,35 @@ export const updateBooking = async (req, res) => {
       });
     }
 
-    // filtering the data 
-    const allowedFields = ["days", "rentPerDay", "status", "carName"];
-    const incomingKeys = Object.keys(newData);
-    const validKeys = incomingKeys.filter((key) => allowedFields.includes(key));
-    const filteredData = validKeys.reduce((obj, key) => {
-      obj[key] = newData[key];
-      return obj;
-    }, {});
-
-    
-
-    const [result] = await updateBookingbyId(bookingId, req.user.id, filteredData)
+    const [result] = await updateBookingbyId(bookingId, req.user.id, newData);
 
     return res.status(200).json({
       success: true,
       data: result,
     });
-
-    
   } catch (error) {
     return res.status(500).json({
       success: false,
       error: "Internal Server Error --- " + error.message,
     });
   }
-
 };
 
 export const deleteBooking = async (req, res) => {
-  const { bookingId } = req.params;
+  const parsed = bookingIdSchema.safeParse(req.params);
 
   // console.log(bookingId)
-
-  if (!Number.isInteger(parseInt(bookingId))) {
+  if (!parsed.success) {
     return res.status(404).json({
       success: false,
       error: "Booking not found",
     });
   }
 
+  const { bookingId } = parsed.data;
+
   try {
-    const booking = await findBookingById(parseInt(bookingId), req.user.id);
+    const booking = await findBookingById(bookingId, req.user.id);
 
     if (booking.length === 0) {
       return res.status(404).json({
@@ -189,7 +201,7 @@ export const deleteBooking = async (req, res) => {
       });
     }
 
-    const [result] = await deleteBookingbyId(bookingId, req.user.id)
+    await deleteBookingbyId(bookingId, req.user.id);
 
     return res.status(200).json({
       success: true,

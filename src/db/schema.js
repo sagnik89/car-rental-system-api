@@ -39,10 +39,11 @@ export const bookings = pgTable("bookings", {
 
   rentPerDay: integer("rent_per_day").notNull(),
 
+  totalCost: integer("total_cost").notNull(), 
+
   status: bookingStatusEnum("status").notNull(),
 
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
 });
-

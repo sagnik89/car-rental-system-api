@@ -1,22 +1,34 @@
-import express from "express"
+import express from "express";
 
-const router = express.Router()
+import { verifyToken } from "../middleware/authMiddleware.js";
 
-router.get("/", (req, res) => {
-    res.json({msg:"get boookings route"})
-})
-
-router.post("/", (req, res) => {
-    res.json({msg:"post bookings route"})
-})
-
-router.put("/:bookingId", (req, res) => {
-    res.json({msg:"put booking route"})
-})
-
-router.delete("/:bookingId", (req, res) => {
-    res.json({msg:"delete booking route"})
-})
+import {
+  deleteBooking,
+  getBookings,
+  getSingleBooking,
+  postBooking,
+  updateBooking,
+} from "../controllers/bookingsController.js";
 
 
-export default router
+const router = express.Router();
+
+//defined globally [applicable to all routes]
+router.use(verifyToken); 
+
+//get all bookings 
+router.get("/", getBookings);
+
+// get a single booking 
+router.get("/:bookingId", getSingleBooking);
+
+// create a booking 
+router.post("/", postBooking);
+
+// update a booking
+router.put("/:bookingId", updateBooking);
+
+// delete a booking
+router.delete("/:bookingId", deleteBooking);
+
+export default router;

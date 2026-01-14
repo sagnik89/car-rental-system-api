@@ -7,7 +7,6 @@ import {
   updateBookingbyId,
 } from "../db/dbHelper.js";
 
-
 // zod schemas
 const bookingIdSchema = z.object({
   bookingId: z.coerce.number().int().positive(),
@@ -34,7 +33,10 @@ export const postBooking = async (req, res) => {
   if (!parsed.success) {
     return res.status(400).json({
       success: false,
-      error: "Invalid inputs",
+      error: {
+        message: "Invalid Input",
+        issues: z.flattenError(parsed.error),
+      },
     });
   }
 
@@ -61,7 +63,7 @@ export const postBooking = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error: "Internal Server Error --- " + error.message,
+      error: { message: "Internal Server Error" },
     });
   }
 };
@@ -95,7 +97,7 @@ export const getBookings = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error: "Internal Server Error --- " + error.message,
+      error: { message: "Internal Server Error" },
     });
   }
 };
@@ -106,7 +108,10 @@ export const getSingleBooking = async (req, res) => {
   if (!parsed.success) {
     return res.status(404).json({
       success: false,
-      error: "Booking not found",
+      error: {
+        message: "Booking Not Found",
+        issues: z.flattenError(parsed.error),
+      },
     });
   }
 
@@ -118,7 +123,7 @@ export const getSingleBooking = async (req, res) => {
     if (booking.length === 0) {
       return res.status(404).json({
         success: false,
-        error: "Booking not found",
+        error: { message: "Booking not found" },
       });
     }
 
@@ -129,7 +134,7 @@ export const getSingleBooking = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error: "Internal Server Error --- " + error.message,
+      error: { message: "Internal Server Error" },
     });
   }
 };
@@ -139,7 +144,10 @@ export const updateBooking = async (req, res) => {
   if (!paramParsed.success) {
     return res.status(404).json({
       success: false,
-      error: "Booking not found",
+      error: {
+        message: "Booking Not Found",
+        issues: z.flattenError(parsed.error),
+      },
     });
   }
 
@@ -147,7 +155,10 @@ export const updateBooking = async (req, res) => {
   if (!bodyParsed.success) {
     return res.status(400).json({
       success: false,
-      error: "Invalid inputs",
+      error: {
+        message: "Invalid Input",
+        issues: z.flattenError(parsed.error),
+      },
     });
   }
 
@@ -160,7 +171,7 @@ export const updateBooking = async (req, res) => {
     if (booking.length === 0) {
       return res.status(404).json({
         success: false,
-        error: "Booking not found",
+        error: { message: "Booking Not Found" },
       });
     }
 
@@ -173,7 +184,7 @@ export const updateBooking = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error: "Internal Server Error --- " + error.message,
+      error: { message: "Internal Server Error" },
     });
   }
 };
@@ -185,7 +196,10 @@ export const deleteBooking = async (req, res) => {
   if (!parsed.success) {
     return res.status(404).json({
       success: false,
-      error: "Booking not found",
+      error: {
+        message: "Booking Not Found",
+        issues: z.flattenError(parsed.error),
+      },
     });
   }
 
@@ -197,7 +211,7 @@ export const deleteBooking = async (req, res) => {
     if (booking.length === 0) {
       return res.status(404).json({
         success: false,
-        error: "Booking not found",
+        error: { message: "Booking not found" },
       });
     }
 
@@ -212,7 +226,7 @@ export const deleteBooking = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error: "Internal Server Error --- " + error.message,
+      error: { message: "Internal Server Error" },
     });
   }
 };

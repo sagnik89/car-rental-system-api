@@ -10,14 +10,16 @@ const authSchema = z.object({
   password: z.string().min(6),
 });
 
-
 export const userSignup = async (req, res) => {
   const parsed = authSchema.safeParse(req.body);
 
   if (!parsed.success) {
     return res.status(400).json({
       success: false,
-      error: "Invalid Input",
+      error: {
+        message: "Invalid Input",
+        issues: z.flattenError(parsed.error),
+      },
     });
   }
 
@@ -29,7 +31,7 @@ export const userSignup = async (req, res) => {
     if (existingUser.length > 0) {
       return res.status(409).json({
         success: false,
-        error: "Username already exists",
+        error: { message: "Username already exists" },
       });
     }
 
@@ -49,7 +51,7 @@ export const userSignup = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error: "Failed to create user.\nError: " + error.message,
+      error: { message: "Failed to create user." },
     });
   }
 };
@@ -60,7 +62,10 @@ export const userLogin = async (req, res) => {
   if (!parsed.success) {
     return res.status(400).json({
       success: false,
-      error: "Invalid Input",
+      error: {
+        message: "Invalid Input",
+        issues: z.flattenError(parsed.error),
+      },
     });
   }
 
@@ -72,19 +77,18 @@ export const userLogin = async (req, res) => {
     if (existingUser.length === 0) {
       return res.status(401).json({
         success: false,
-        error: "Invalid Username or Password !",
+        error: { message: "Invalid Username or Password !" },
       });
     }
 
-    const currentUser = existingUser[0]
+    const currentUser = existingUser[0];
 
-
-    const matchingPass = await bcrypt.compare(password, currentUser.password)
+    const matchingPass = await bcrypt.compare(password, currentUser.password);
 
     if (!matchingPass) {
       return res.status(401).json({
         success: false,
-        error: "Invalid Username or Password !",
+        error: { message: "Invalid Username or Password !" },
       });
     }
 
@@ -106,12 +110,12 @@ export const userLogin = async (req, res) => {
         token: jwt_token,
       },
     });
-
-    
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error: "Failed to Login.\nError: " + error.message,
+      error: {
+        message: "Failed to Login.",
+      },
     });
   }
 };

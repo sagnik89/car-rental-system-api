@@ -3,7 +3,7 @@ import "dotenv/config"
 
 // import routes
 import authRoutes from "./routes/authRoutes.js"
-import bookingRoutes from "./routes/boookingRoutes.js"
+import bookingRoutes from "./routes/bookingRoutes.js"
 
 
 
